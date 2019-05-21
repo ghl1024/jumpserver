@@ -7,8 +7,8 @@ from django.utils import timezone
 from common.utils import date_expired_default, set_or_append_attr_bulk
 from orgs.mixins import OrgModelMixin, OrgManager
 
-from perms.const import PERMS_ACTION_NAME_CHOICES, PERMS_ACTION_NAME_ALL
-
+from ..const import PERMS_ACTION_NAME_CHOICES, PERMS_ACTION_NAME_ALL
+from .base import BasePermission
 
 __all__ = [
     'Action', 'AssetPermission', 'NodePermission',
@@ -47,21 +47,11 @@ class AssetPermissionManager(OrgManager):
         return self.get_queryset().valid()
 
 
-class AssetPermission(OrgModelMixin):
-    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
-    name = models.CharField(max_length=128, verbose_name=_('Name'))
-    users = models.ManyToManyField('users.User', related_name='asset_permissions', blank=True, verbose_name=_("User"))
-    user_groups = models.ManyToManyField('users.UserGroup', related_name='asset_permissions', blank=True, verbose_name=_("User group"))
+class AssetPermission(OrgModelMixin, BasePermission):
     assets = models.ManyToManyField('assets.Asset', related_name='granted_by_permissions', blank=True, verbose_name=_("Asset"))
     nodes = models.ManyToManyField('assets.Node', related_name='granted_by_permissions', blank=True, verbose_name=_("Nodes"))
     system_users = models.ManyToManyField('assets.SystemUser', related_name='granted_by_permissions', verbose_name=_("System user"))
     actions = models.ManyToManyField('Action', related_name='permissions', blank=True, verbose_name=_('Action'))
-    is_active = models.BooleanField(default=True, verbose_name=_('Active'))
-    date_start = models.DateTimeField(default=timezone.now, db_index=True, verbose_name=_("Date start"))
-    date_expired = models.DateTimeField(default=date_expired_default, db_index=True, verbose_name=_('Date expired'))
-    created_by = models.CharField(max_length=128, blank=True, verbose_name=_('Created by'))
-    date_created = models.DateTimeField(auto_now_add=True, verbose_name=_('Date created'))
-    comment = models.TextField(verbose_name=_('Comment'), blank=True)
 
     objects = AssetPermissionManager.from_queryset(AssetPermissionQuerySet)()
 
