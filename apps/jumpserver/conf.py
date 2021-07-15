@@ -212,9 +212,23 @@ class Config(dict):
         'CAS_ROOT_PROXIED_AS': '',
         'CAS_LOGOUT_COMPLETELY': True,
         'CAS_VERSION': 3,
+        'CAS_USERNAME_ATTRIBUTE': 'uid',
+        'CAS_APPLY_ATTRIBUTES_TO_USER': False,
+        'CAS_RENAME_ATTRIBUTES': {},
+        'CAS_CREATE_USER': True,
 
         'AUTH_SSO': False,
         'AUTH_SSO_AUTHKEY_TTL': 60 * 15,
+
+        'AUTH_WECOM': False,
+        'WECOM_CORPID': '',
+        'WECOM_AGENTID': '',
+        'WECOM_SECRET': '',
+
+        'AUTH_DINGTALK': False,
+        'DINGTALK_AGENTID': '',
+        'DINGTALK_APPKEY': '',
+        'DINGTALK_APPSECRET': '',
 
         'OTP_VALID_WINDOW': 2,
         'OTP_ISSUER_NAME': 'JumpServer',
@@ -249,6 +263,7 @@ class Config(dict):
         'SECURITY_INSECURE_COMMAND': False,
         'SECURITY_INSECURE_COMMAND_LEVEL': 5,
         'SECURITY_INSECURE_COMMAND_EMAIL_RECEIVER': '',
+        'SECURITY_LUNA_REMEMBER_AUTH': True,
 
         'HTTP_BIND_HOST': '0.0.0.0',
         'HTTP_LISTEN_PORT': 8080,
@@ -259,6 +274,7 @@ class Config(dict):
         'FTP_LOG_KEEP_DAYS': 200,
         'ASSETS_PERM_CACHE_TIME': 3600 * 24,
         'SECURITY_MFA_VERIFY_TTL': 3600,
+        'OLD_PASSWORD_HISTORY_LIMIT_COUNT': 5,
         'ASSETS_PERM_CACHE_ENABLE': HAS_XPACK,
         'SYSLOG_ADDR': '',  # '192.168.0.1:514'
         'SYSLOG_FACILITY': 'user',
@@ -268,7 +284,7 @@ class Config(dict):
         'WINDOWS_SSH_DEFAULT_SHELL': 'cmd',
         'FLOWER_URL': "127.0.0.1:5555",
         'DEFAULT_ORG_SHOW_ALL_USERS': True,
-        'PERIOD_TASK_ENABLE': True,
+        'PERIOD_TASK_ENABLED': True,
         'FORCE_SCRIPT_NAME': '',
         'LOGIN_CONFIRM_ENABLE': False,
         'WINDOWS_SKIP_ALL_MANUAL_PASSWORD': False,
@@ -289,7 +305,9 @@ class Config(dict):
         'SESSION_SAVE_EVERY_REQUEST': True,
         'SESSION_EXPIRE_AT_BROWSER_CLOSE_FORCE': False,
         'FORGOT_PASSWORD_URL': '',
-        'HEALTH_CHECK_TOKEN': ''
+        'HEALTH_CHECK_TOKEN': '',
+
+        'TERMINAL_RDP_ADDR': ''
     }
 
     def compatible_auth_openid_of_key(self):

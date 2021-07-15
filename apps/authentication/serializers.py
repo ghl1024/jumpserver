@@ -8,14 +8,16 @@ from users.models import User
 from assets.models import Asset, SystemUser, Gateway
 from applications.models import Application
 from users.serializers import UserProfileSerializer
+from assets.serializers import ProtocolsField
 from perms.serializers.asset.permission import ActionsField
-from .models import AccessKey, LoginConfirmSetting, SSOToken
+from .models import AccessKey, LoginConfirmSetting
 
 
 __all__ = [
     'AccessKeySerializer', 'OtpVerifySerializer', 'BearerTokenSerializer',
     'MFAChallengeSerializer', 'LoginConfirmSettingSerializer', 'SSOTokenSerializer',
-    'ConnectionTokenSerializer', 'ConnectionTokenSecretSerializer', 'RDPFileSerializer'
+    'ConnectionTokenSerializer', 'ConnectionTokenSecretSerializer', 'RDPFileSerializer',
+    'PasswordVerifySerializer',
 ]
 
 
@@ -28,6 +30,10 @@ class AccessKeySerializer(serializers.ModelSerializer):
 
 class OtpVerifySerializer(serializers.Serializer):
     code = serializers.CharField(max_length=6, min_length=6)
+
+
+class PasswordVerifySerializer(serializers.Serializer):
+    password = serializers.CharField()
 
 
 class BearerTokenSerializer(serializers.Serializer):
@@ -150,9 +156,11 @@ class ConnectionTokenUserSerializer(serializers.ModelSerializer):
 
 
 class ConnectionTokenAssetSerializer(serializers.ModelSerializer):
+    protocols = ProtocolsField(label='Protocols', read_only=True)
+
     class Meta:
         model = Asset
-        fields = ['id', 'hostname', 'ip', 'port', 'org_id']
+        fields = ['id', 'hostname', 'ip', 'protocols', 'org_id']
 
 
 class ConnectionTokenSystemUserSerializer(serializers.ModelSerializer):
@@ -188,8 +196,9 @@ class ConnectionTokenSecretSerializer(serializers.Serializer):
     system_user = ConnectionTokenSystemUserSerializer(read_only=True)
     gateway = ConnectionTokenGatewaySerializer(read_only=True)
     actions = ActionsField()
+    expired_at = serializers.IntegerField()
 
 
 class RDPFileSerializer(ConnectionTokenSerializer):
-    width = serializers.IntegerField(default=1280)
-    height = serializers.IntegerField(default=800)
+    width = serializers.IntegerField(allow_null=True, max_value=3112, min_value=100, required=False)
+    height = serializers.IntegerField(allow_null=True, max_value=4096, min_value=100, required=False)

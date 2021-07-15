@@ -6,15 +6,16 @@ from rest_framework import serializers
 __all__ = [
     'BasicSettingSerializer', 'EmailSettingSerializer', 'EmailContentSettingSerializer',
     'LDAPSettingSerializer', 'TerminalSettingSerializer', 'SecuritySettingSerializer',
-    'SettingsSerializer'
+    'SettingsSerializer', 'WeComSettingSerializer', 'DingTalkSettingSerializer',
 ]
 
 
 class BasicSettingSerializer(serializers.Serializer):
     SITE_URL = serializers.URLField(
         required=True, label=_("Site url"),
-        help_text=_('eg: http://demo.jumpserver.org:8080')
+        help_text=_('eg: http://dev.jumpserver.org:8080')
     )
+
     USER_GUIDE_URL = serializers.URLField(
         required=False, allow_blank=True, allow_null=True, label=_("User guide url"),
         help_text=_('User first login update profile done redirect to it')
@@ -121,7 +122,11 @@ class TerminalSettingSerializer(serializers.Serializer):
         ('50', '50'),
     )
     TERMINAL_PASSWORD_AUTH = serializers.BooleanField(required=False, label=_('Password auth'))
-    TERMINAL_PUBLIC_KEY_AUTH = serializers.BooleanField(required=False, label=_('Public key auth'))
+    TERMINAL_PUBLIC_KEY_AUTH = serializers.BooleanField(
+        required=False, label=_('Public key auth'),
+        help_text=_('Tips: If use other auth method, like AD/LDAP, you should disable this to '
+                    'avoid being able to log in after deleting')
+    )
     TERMINAL_ASSET_LIST_SORT_BY = serializers.ChoiceField(SORT_BY_CHOICES, required=False, label=_('List sort by'))
     TERMINAL_ASSET_LIST_PAGE_SIZE = serializers.ChoiceField(PAGE_SIZE_CHOICES, required=False, label=_('List page size'))
     TERMINAL_SESSION_KEEP_DURATION = serializers.IntegerField(
@@ -129,6 +134,12 @@ class TerminalSettingSerializer(serializers.Serializer):
         help_text=_('Units: days, Session, record, command will be delete if more than duration, only in database')
     )
     TERMINAL_TELNET_REGEX = serializers.CharField(allow_blank=True, max_length=1024, required=False, label=_('Telnet login regex'))
+    TERMINAL_RDP_ADDR = serializers.CharField(
+        required=False, label=_("RDP address"),
+        max_length=1024,
+        allow_blank=True,
+        help_text=_('RDP visit address, eg: dev.jumpserver.org:3389')
+    )
 
 
 class SecuritySettingSerializer(serializers.Serializer):
@@ -163,6 +174,11 @@ class SecuritySettingSerializer(serializers.Serializer):
         label=_('User password expiration'),
         help_text=_('Tip: (unit: day) If the user does not update the password during the time, the user password will expire failure;The password expiration reminder mail will be automatic sent to the user by system within 5 days (daily) before the password expires')
     )
+    OLD_PASSWORD_HISTORY_LIMIT_COUNT = serializers.IntegerField(
+        min_value=0, max_value=99999, required=True,
+        label=_('Number of repeated historical passwords'),
+        help_text=_('Tip: When the user resets the password, it cannot be the previous n historical passwords of the user')
+    )
     SECURITY_PASSWORD_MIN_LENGTH = serializers.IntegerField(
         min_value=6, max_value=30, required=True,
         label=_('Password minimum length')
@@ -180,13 +196,29 @@ class SecuritySettingSerializer(serializers.Serializer):
     )
 
 
+class WeComSettingSerializer(serializers.Serializer):
+    WECOM_CORPID = serializers.CharField(max_length=256, required=True, label='corpid')
+    WECOM_AGENTID = serializers.CharField(max_length=256, required=True, label='agentid')
+    WECOM_SECRET = serializers.CharField(max_length=256, required=False, label='secret', write_only=True)
+    AUTH_WECOM = serializers.BooleanField(default=False, label=_('Enable WeCom Auth'))
+
+
+class DingTalkSettingSerializer(serializers.Serializer):
+    DINGTALK_AGENTID = serializers.CharField(max_length=256, required=True, label='AgentId')
+    DINGTALK_APPKEY = serializers.CharField(max_length=256, required=True, label='AppKey')
+    DINGTALK_APPSECRET = serializers.CharField(max_length=256, required=False, label='AppSecret', write_only=True)
+    AUTH_DINGTALK = serializers.BooleanField(default=False, label=_('Enable DingTalk Auth'))
+
+
 class SettingsSerializer(
     BasicSettingSerializer,
     EmailSettingSerializer,
     EmailContentSettingSerializer,
     LDAPSettingSerializer,
     TerminalSettingSerializer,
-    SecuritySettingSerializer
+    SecuritySettingSerializer,
+    WeComSettingSerializer,
+    DingTalkSettingSerializer,
 ):
 
     # encrypt_fields 现在使用 write_only 来判断了

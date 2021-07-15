@@ -27,11 +27,23 @@ json_render = JSONRenderer()
 
 
 MODELS_NEED_RECORD = (
-    'User', 'UserGroup', 'Asset', 'Node', 'AdminUser', 'SystemUser',
-    'Domain', 'Gateway', 'Organization', 'AssetPermission', 'CommandFilter',
-    'CommandFilterRule', 'License', 'Setting', 'Account', 'SyncInstanceTask',
-    'Platform', 'ChangeAuthPlan', 'GatherUserTask',
-    'RemoteApp', 'RemoteAppPermission', 'DatabaseApp', 'DatabaseAppPermission',
+    # users
+    'User', 'UserGroup',
+    # acls
+    'LoginACL', 'LoginAssetACL',
+    # assets
+    'Asset', 'Node', 'AdminUser', 'SystemUser', 'Domain', 'Gateway', 'CommandFilterRule',
+    'CommandFilter', 'Platform',
+    # applications
+    'Application',
+    # orgs
+    'Organization',
+    # settings
+    'Setting',
+    # perms
+    'AssetPermission', 'ApplicationPermission',
+    # xpack
+    'License', 'Account', 'SyncInstanceTask', 'ChangeAuthPlan', 'GatherUserTask',
 )
 
 
@@ -45,6 +57,9 @@ class AuthBackendLabelMapping(LazyObject):
         backend_label_mapping[settings.AUTH_BACKEND_PUBKEY] = _('SSH Key')
         backend_label_mapping[settings.AUTH_BACKEND_MODEL] = _('Password')
         backend_label_mapping[settings.AUTH_BACKEND_SSO] = _('SSO')
+        backend_label_mapping[settings.AUTH_BACKEND_AUTH_TOKEN] = _('Auth Token')
+        backend_label_mapping[settings.AUTH_BACKEND_WECOM] = _('WeCom')
+        backend_label_mapping[settings.AUTH_BACKEND_DINGTALK] = _('DingTalk')
         return backend_label_mapping
 
     def _setup(self):
@@ -142,12 +157,13 @@ def get_login_backend(request):
     return backend_label
 
 
-def generate_data(username, request):
+def generate_data(username, request, login_type=None):
     user_agent = request.META.get('HTTP_USER_AGENT', '')
     login_ip = get_request_ip(request) or '0.0.0.0'
-    if isinstance(request, Request):
+
+    if login_type is None and isinstance(request, Request):
         login_type = request.META.get('HTTP_X_JMS_LOGIN_TYPE', 'U')
-    else:
+    if login_type is None:
         login_type = 'W'
 
     data = {
@@ -162,9 +178,9 @@ def generate_data(username, request):
 
 
 @receiver(post_auth_success)
-def on_user_auth_success(sender, user, request, **kwargs):
+def on_user_auth_success(sender, user, request, login_type=None, **kwargs):
     logger.debug('User login success: {}'.format(user.username))
-    data = generate_data(user.username, request)
+    data = generate_data(user.username, request, login_type=login_type)
     data.update({'mfa': int(user.mfa_enabled), 'status': True})
     write_login_log(**data)
 

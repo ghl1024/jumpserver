@@ -16,6 +16,7 @@ class ReplayStorageTypeChoices(TextChoices):
     swift = 'swift', 'Swift'
     oss = 'oss', 'OSS'
     azure = 'azure', 'Azure'
+    obs = 'obs', 'OBS'
 
 
 class CommandStorageTypeChoices(TextChoices):
@@ -43,6 +44,7 @@ class TerminalTypeChoices(TextChoices):
     guacamole = 'guacamole', 'Guacamole'
     omnidb = 'omnidb', 'OmniDB'
     xrdp = 'xrdp', 'Xrdp'
+    lion = 'lion', 'Lion'
 
     @classmethod
     def types(cls):

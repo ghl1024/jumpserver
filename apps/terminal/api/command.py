@@ -4,27 +4,24 @@ import time
 from django.conf import settings
 from django.utils import timezone
 from django.shortcuts import HttpResponse
-from rest_framework import viewsets
 from rest_framework import generics
 from rest_framework.fields import DateTimeField
 from rest_framework.response import Response
-from rest_framework.decorators import action
 from django.template import loader
 
-from common.http import is_true
-from terminal.models import CommandStorage, Command
+from terminal.models import CommandStorage
 from terminal.filters import CommandFilter
 from orgs.utils import current_org
 from common.permissions import IsOrgAdminOrAppUser, IsOrgAuditor, IsAppUser
-from common.const.http import GET
+from common.drf.api import JMSBulkModelViewSet
 from common.utils import get_logger
-from terminal.utils import send_command_alert_mail
 from terminal.serializers import InsecureCommandAlertSerializer
 from terminal.exceptions import StorageInvalid
 from ..backends import (
     get_command_storage, get_multi_command_storage,
     SessionCommandSerializer,
 )
+from ..notifications import CommandAlertMessage
 
 logger = get_logger(__name__)
 __all__ = ['CommandViewSet', 'CommandExportApi', 'InsecureCommandAlertAPI']
@@ -94,7 +91,7 @@ class CommandQueryMixin:
         return date_from_st, date_to_st
 
 
-class CommandViewSet(viewsets.ModelViewSet):
+class CommandViewSet(JMSBulkModelViewSet):
     """接受app发送来的command log, 格式如下
     {
         "user": "admin",
@@ -207,8 +204,6 @@ class InsecureCommandAlertAPI(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         commands = serializer.validated_data
         for command in commands:
-            if command['risk_level'] >= settings.SECURITY_INSECURE_COMMAND_LEVEL and \
-                    settings.SECURITY_INSECURE_COMMAND and \
-                    settings.SECURITY_INSECURE_COMMAND_EMAIL_RECEIVER:
-                send_command_alert_mail(command)
+            if command['risk_level'] >= settings.SECURITY_INSECURE_COMMAND_LEVEL:
+                CommandAlertMessage(command).publish_async()
         return Response()

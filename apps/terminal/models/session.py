@@ -11,18 +11,19 @@ from django.core.files.storage import default_storage
 from django.core.cache import cache
 
 from assets.models import Asset
+from users.models import User
 from orgs.mixins.models import OrgModelMixin
-from common.db.models import ChoiceSet
+from common.db.models import TextChoices
 from ..backends import get_multi_command_storage
 
 
 class Session(OrgModelMixin):
-    class LOGIN_FROM(ChoiceSet):
+    class LOGIN_FROM(TextChoices):
         ST = 'ST', 'SSH Terminal'
         RT = 'RT', 'RDP Terminal'
         WT = 'WT', 'Web Terminal'
 
-    class PROTOCOL(ChoiceSet):
+    class PROTOCOL(TextChoices):
         SSH = 'ssh', 'ssh'
         RDP = 'rdp', 'rdp'
         VNC = 'vnc', 'vnc'
@@ -80,6 +81,10 @@ class Session(OrgModelMixin):
         return Asset.objects.get(id=self.asset_id)
 
     @property
+    def user_obj(self):
+        return User.objects.get(id=self.user_id)
+
+    @property
     def _date_start_first_has_replay_rdp_session(self):
         if self.__class__._DATE_START_FIRST_HAS_REPLAY_RDP_SESSION is None:
             instance = self.__class__.objects.filter(
@@ -104,7 +109,12 @@ class Session(OrgModelMixin):
         _PROTOCOL = self.PROTOCOL
         if self.is_finished:
             return False
-        if self.protocol in [_PROTOCOL.SSH, _PROTOCOL.TELNET, _PROTOCOL.K8S]:
+        if self.login_from == self.LOGIN_FROM.RT:
+            return False
+        if self.protocol in [
+            _PROTOCOL.SSH, _PROTOCOL.VNC, _PROTOCOL.RDP,
+            _PROTOCOL.TELNET, _PROTOCOL.K8S
+        ]:
             return True
         else:
             return False
